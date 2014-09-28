@@ -1,0 +1,26 @@
+{
+	"name": "passenger",
+	"version": "0.0.1",
+	"description": "Simple messenger program using WebRTC",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wellsjo/passenger.git"
+	},
+	"keywords": [
+		"webrtc"
+	],
+	"author": "Wells Johnston / Willem van Daalen",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/wellsjo/passenger/issues"
+	},
+	"homepage": "https://github.com/wellsjo/passenger",
+	"dependencies": {
+		"peer": "latest",
+		"peerjs": "latest"
+	}
+}
