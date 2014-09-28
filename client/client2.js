@@ -1,5 +1,10 @@
 var id = '2';
 
+document.querySelector('#send_message').onclick = function() {
+    var message = document.querySelector('#message').value;
+    conn.send(message);
+};
+
 var peer = new Peer(id, {
     debug: 3,
     host: 'localhost',
@@ -9,8 +14,9 @@ var peer = new Peer(id, {
 });
 
 var conn = peer.connect('1');
+
 conn.on('open', function(){
-    conn.send('hi client 1!');
+    console.log('connection opened');
 });
 
 peer.on('connection', function(conn) {
