@@ -1,0 +1,13 @@
+#output {
+	width: 48%;
+	display: inline-block;
+	outline: 1px solid #aaa;
+	min-height: 7.25em;
+	float: right;
+}
+
+#message {
+	width: 48%;
+	display: inline-block;
+	height: 10em;
+}
