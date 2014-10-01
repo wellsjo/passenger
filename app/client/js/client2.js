@@ -11,6 +11,7 @@ var peer = new Peer(id, {
 var conn = peer.connect('1');
 
 conn.on('open', function () {
+
 	var input = document.querySelector('#message'),
 		output = document.querySelector('#output');
 
