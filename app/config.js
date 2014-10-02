@@ -6,20 +6,24 @@ p.config = {
 
     env: 'local',  // environment = local | remote
 
-    debug: false,
+    debug: true,
 
     local: {
-        host: 'localhost',
-        port: 9000,
-        path: '/',
-        server_secret: '1234' // default (input will override) *
+        peer_host: 'localhost',
+        peer_port: 9000,
+        peer_path: '/',
+
+        http_host: 'http://localhost',
+        http_port: 3000
     },
 
     remote: {
         host: '54.164.53.196',  // aws instance (staging)
         port: 9000,
         path: '/',
-        server_secret: '1234' // *
+
+        http_host: null, // figure this out later
+        http_port: null
     },
 
 };
@@ -29,13 +33,14 @@ p.user = {
 
 };
 
-// PeerJS settings
-p.peer = {
-    connection: {
-        debug: (function(){ return p.config.debug ? 3 : 1 }()),  // 1 | 3 depending on p.config.debug
-        host: passenger.config[passenger.config.env].host,
-        port: passenger.config[passenger.config.env].port,
-        server_secret: passenger.config[passenger.config.env].server_secret,
-        path: passenger.config[passenger.config.env].path
-    }
+p.connections = {
+    peer: {
+        debug: (function(){ return p.config.debug ? 3 : 0 }()),  // 0 | 3 depending on p.config.debug
+        host: passenger.config[passenger.config.env].peer_host,
+        port: passenger.config[passenger.config.env].peer_port,
+        path: passenger.config[passenger.config.env].peer_path
+    },
+
+    http_server: passenger.config[passenger.config.env].http_host + ':'
+        + passenger.config[passenger.config.env].http_port
 };
