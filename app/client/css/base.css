@@ -1,13 +1,41 @@
-#output {
-	width: 48%;
-	display: inline-block;
-	outline: 1px solid #aaa;
-	min-height: 7.25em;
-	float: right;
+#sidebar {
+	background: #214963;
+	color: #fff;
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	height: 100%;
+	width: 20%;
+	text-align: center;
 }
 
-#message {
-	width: 48%;
+#username {
+	padding: 0.75em;
+	width: 80%;
+	margin: 1em;
+	border-radius: 0.25em;
+	border: none;
+	outline: none;
+	box-sizing: border-box;
+}
+
+#output {
+	width: 80%;
+	position: absolute;
 	display: inline-block;
-	height: 10em;
+	outline: 1px solid #aaa;
+	height: 100%;
+	right: 0;
+	bottom: 0;
+	z-index: -1;
+}
+
+#input {
+	width: 80%;
+	display: inline-block;
+	height: 2em;
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	box-sizing: border-box;
 }

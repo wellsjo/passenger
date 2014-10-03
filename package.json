@@ -21,6 +21,7 @@
 	"homepage": "https://github.com/wellsjo/passenger",
 	"dependencies": {
 		"peer": "latest",
-		"peerjs": "latest"
+		"peerjs": "latest",
+		"express": "latest"
 	}
 }

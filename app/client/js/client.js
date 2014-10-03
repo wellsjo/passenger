@@ -1,28 +1,57 @@
-document.querySelector('#go').onclick = function() {
+$(function () {
+	"use strict";
 
-    var peer = passenger.makePeer();
-    console.log(peer.connections);
+	function escapeHtml(str) {
+		var div = document.createElement('div');
 
-    peer.on('connection', function(dataConnection) {
-        console.log('connection:');
-        console.log(dataConnection);
-    });
+		div.appendChild(document.createTextNode(str));
+		return div.innerHTML;
+	}
 
-    peer.on('open', function(id) {
-        console.log('Peer ID: ' + id);
+	var client = new Passenger(),
+		$input = $('#input'),
+		$username = $('#username'),
+		output = document.querySelector('#output');
 
-        // TODO make the get url part of the config after
-        // configuring the web server
-        $.get(p.connections.http_server + '/connections', function(connections) {
-            console.log('peer connections: ' + connections);
-            var peer_connections = [];
-            for(i in connections) {
-                console.log('connecting to ' + connections[i]);
-                peer_connections.push(peer.connect(connections[i]));
-            }
-            // note: it seems like you can connect to yourself lol
-            console.log(peer_connections);
-        });
-    });
+	client.initializePeer();
 
-};
+	client.onData(function (data, conn) {
+		output.innerHTML += [
+			"<strong>",
+			conn.metadata.username,
+			": </strong>",
+			escapeHtml(data),
+			'<br />'
+		].join('');
+	});
+
+	$input.on('keydown', function (e) {
+		var data = $input.val();
+
+		// if 'enter' is pressed
+		if (e.which === 13) {
+			client.sendToAll(data);
+			output.innerHTML += [
+				"<strong>",
+				$username.val(),
+				": </strong>",
+				escapeHtml(data),
+				'<br />'
+			].join('');
+			$input.val('');
+		}
+	});
+
+	// TODO: WCvD
+	// Refactor to allow changing username
+	$username.on('keydown', function (e) {
+		// if 'enter' is pressed
+		if (e.which === 13) {
+			client.setUserInfo({
+				username: $username.val()
+			});
+			client.connectToAll();
+		}
+	});
+
+});
