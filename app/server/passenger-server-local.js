@@ -3,8 +3,8 @@
  * local settings for peerjs server
  */
 var PeerServer = require('peer').PeerServer,
-    express = require('express'),
-    http_server = express();
+	express = require('express'),
+	http_server = express();
 
 // TODO have these settings imported from config.js
 var server = new PeerServer({
@@ -24,26 +24,26 @@ var connections = [];
  * PeerServer Events
  */
 server.on('connection', function (id) {
-    connections.push(id);
+	connections.push(id);
 });
 
 server.on('disconnect', function (id) {
-    connections.splice(connections.indexOf(id), 1);
+	connections.splice(connections.indexOf(id), 1);
 });
 
 /**
  * HTTP server endpoints
  */
-http_server.all('/connections', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With");
-    next();
+http_server.all('/connections', function (req, res, next) {
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "X-Requested-With");
+	next();
 });
 
-http_server.get('/connections', function(req, res) {
-    res.send(connections);
+http_server.get('/connections', function (req, res) {
+	res.send(connections);
 });
 
-http_server.listen(3000, function() {
-    console.log('Node HTTP server listening on port 3000');
+http_server.listen(3000, function () {
+	console.log('Node HTTP server listening on port 3000');
 });
