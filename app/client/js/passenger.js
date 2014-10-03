@@ -2,6 +2,8 @@
 	"use strict";
 
 	// Default config options
+    // TODO separate this initialization logic from the passenger core functionality
+    // maybe an init.js script or something
 	var DEFAULTS = {
 
 			env: 'local', // environment = local | remote
@@ -30,10 +32,11 @@
 		_dataCallbacks = [], // hold callback functions for receiving data
 		_peer, _singleton;
 
-	// Constructor
+    // Constructor
+    // allows for one passenger initialization using singleton pattern
 	function Passenger(options) {
 		if (!_singleton) {
-			this.config = $.extend(true, {}, DEFAULTS, options);
+			this.config = $.extend(true, {}, DEFAULTS, options); // overrides config defaults
 			this.setupConnections();
 			this.setUserInfo();
 
@@ -50,6 +53,18 @@
 	Passenger.fn.setUserInfo = function (options) {
 		this.user = $.extend(true, this.user, options);
 	};
+
+    // set a user property: setUserProperty('userid', '2345');
+    Passenger.fn.setUserProperty = function (property, value) {
+        this.user[property] = value;
+    };
+
+    // get a property or all properties from the user (if no property provided)
+    // getUserInfo() --> return user object
+    // getUserInfo('userid') --> returns user.userid
+    Passenger.fn.getUserInfo = function(property) {
+        return !property ? this.user : this.user[property];
+    };
 
 	// sets the old value of Passenger on the window and returns itself
 	Passenger.fn.noConflict = function () {
@@ -79,20 +94,29 @@
 	// inistantiates an new Peer object with the given options and
 	// establishes 'connection' and 'data' callback functions
 	Passenger.fn.initializePeer = function (options) {
-		var config = $.extend(true, {}, this.connections.peer, options);
+		var config = $.extend(true, {}, this.connections.peer, options),
+            that = this;
 
-		_peer = new Peer(this.user.id, config);
+		_peer = new Peer(config);
 
 		// attach handler for receiving connection from another peer
 		_peer.on('connection', function (conn) {
+            console.log('peer connection----');
 
 			// loop through _dataCallbacks and call each on receiving data
 			conn.on('data', function (data) {
+                console.log('data------');
 				for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
 			});
 
 		});
 
+        // once connection is open
+        _peer.on('open', function (id) {
+            console.log('connection open-----');
+            that.setUserProperty('id', id);
+            console.log('userid set to ' + id);
+        });
 	};
 
 	// add data handler function to _dataCallbacks array
@@ -104,40 +128,32 @@
 
 	// connect to a peer given its id
 	Passenger.fn.connectToPeer = function (remoteId) {
-		var conn;
-
+		var conn, that = this;
 		if (remoteId !== _peer.id) {
 			conn = _peer.connect(remoteId, {
 				metadata: this.user
 			});
 
-			// once connection is open
-			conn.on('open', function () {
-
-				// attach handlers for receiving data
-				conn.on('data', function (data) {
-					for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
-				});
-
-			});
 		}
 	};
 
+    // called when a username is set.  automatically connect to all peers
 	Passenger.fn.connectToAll = function () {
 		var that = this;
 
 		// get all peer ids from server and iterate over them, connecting to each
 		_peer.listAllPeers(function (peers) {
-			for (var remoteId; remoteId = peers.pop(); that.connectToPeer(remoteId));
-		});
+            var peerId = peers.pop();
+            for (var remoteId; remoteId = peers.pop(); that.connectToPeer(remoteId)) {
 
+            }
+		});
 	};
 
 	Passenger.fn.sendToPeer = function (id, data) {
 		var connections = _peer.connections[id],
 			i, conn;
 
-		debugger;
 		// iterate over connections for a given peer id and send to each
 		for (i = 0; conn = connections && connections[i++]; conn.send(data));
 	};
@@ -147,9 +163,14 @@
 			remoteIds = Object.keys(connections),
 			id;
 
-		while (id = remoteIds.pop())
-			this.sendToPeer(id, data);
+            console.log('DEBUG-----------');
+            console.log(this.getUserInfo('username'));
+            console.log(this.getUserInfo());
+            console.log(connections);
 
+            while (id = remoteIds.pop()) {
+                this.sendToPeer(id, data);
+            }
 	};
 
 	window.Passenger = Passenger;

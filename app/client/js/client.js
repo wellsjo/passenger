@@ -13,7 +13,6 @@ $(function () {
 		$username = $('#username'),
 		output = document.querySelector('#output');
 
-	client.initializePeer();
 
 	client.onData(function (data, conn) {
 		output.innerHTML += [
@@ -42,16 +41,18 @@ $(function () {
 		}
 	});
 
-	// TODO: WCvD
-	// Refactor to allow changing username
 	$username.on('keydown', function (e) {
 		// if 'enter' is pressed
 		if (e.which === 13) {
 			client.setUserInfo({
 				username: $username.val()
 			});
-			client.connectToAll();
+            console.log('username set to ' + $username.val());
+            console.log('initializing peer');
+            client.initializePeer();
 		}
 	});
+
+    console.log('ready to go (enter a username)');
 
 });
