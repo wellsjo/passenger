@@ -1,87 +1,9 @@
-(function (window, $, Peer, _old, undefined) {
+(function (window, $, Peer, Passenger, undefined) {
 	"use strict";
 
-	// Default config options
-	var DEFAULTS = {
-
-			env: 'local', // environment = local | remote
-
-			debug: false,
-
-			local: {
-				peer_host: 'localhost',
-				peer_port: 9000,
-				peer_path: '/',
-
-				http_host: 'http://localhost',
-				http_port: 3000
-			},
-
-			remote: {
-				peer_host: '54.164.53.196', // aws instance (staging)
-				peer_port: 9000,
-				peer_path: '/',
-
-				http_host: null, // figure this out later
-				http_port: null
-			},
-
-		},
-		_dataCallbacks = [], // hold callback functions for receiving data
-        _connectionCallbacks = [], // same, but for incoming connections
-		_peer, _singleton;
-
-    // Constructor allows for one passenger initialization using singleton pattern
-    // sets up connections and creates user object
-	function Passenger(options) {
-		if (!_singleton) {
-			this.config = $.extend(true, {}, DEFAULTS, options); // overrides config defaults
-			this.setupConnections();
-            this.user = {};
-			_singleton = this;
-		}
-		return _singleton;
-	}
-
-	// shortcut for proto
-	Passenger.fn = Passenger.prototype;
-
-    // set a user property: setUserInfo('userid', '2345');
-    Passenger.fn.setUserInfo = function (property, value) {
-        this.user[property] = value;
-    };
-
-    // get a property or all properties from the user (if no property provided)
-    // getUserInfo() --> return user object
-    // getUserInfo('userid') --> returns user.userid
-    Passenger.fn.getUserInfo = function(property) {
-        return !property ? this.user : this.user[property];
-    };
-
-	// sets the old value of Passenger on the window and returns itself
-	Passenger.fn.noConflict = function () {
-		window.Passenger = _old;
-		return Passenger;
-	};
-
-	// accepts a hash of options and overwrites the default configs
-	// or the existing connections object on the instance
-	Passenger.fn.setupConnections = function (options) {
-		this.connections = $.extend(true, this.connections || {
-			peer: {
-				debug: this.config.debug ? 3 : 0,
-				host: this.config[this.config.env].peer_host,
-				port: this.config[this.config.env].peer_port,
-				path: this.config[this.config.env].peer_path
-			},
-
-			httpServer: [
-				this.config[this.config.env].http_host,
-				this.config[this.config.env].http_port
-			].join(':')
-
-		}, options);
-	};
+    var _dataCallbacks = [], // hold callback functions for receiving data
+    _connectionCallbacks = [], // same, but for incoming connections
+    _peer; // the peerjs object
 
 	// inistantiates an new Peer object with the given options and
 	// establishes 'connection' and 'data' callback functions
@@ -91,14 +13,13 @@
 
 		_peer = new Peer(config);
 
-        // once connection is open
         _peer.on('open', function (id) {
             console.log('connection open. userid set to ' + id);
             that.setUserInfo('id', id);
             that.onJoin();
         });
 
-		// attach handler for receiving connection from another peer
+		// receiving connection from another peer
         _peer.on('connection', function (conn) {
 
             // for some reason if this isn't here, the username metadata doesn't carry over.
@@ -110,7 +31,6 @@
             for (var i = 0, fn; fn = _connectionCallbacks[i++]; fn(conn));
 		});
 	};
-
 
     // connect to a peer given its id
     Passenger.fn.connectToPeer = function (remoteId) {
@@ -157,6 +77,18 @@
         }
     };
 
+    // set a user property: setUserInfo('userid', '2345');
+    Passenger.fn.setUserInfo = function (property, value) {
+        this.user[property] = value;
+    };
+
+    // get a property or all properties from the user (if no property provided)
+    // getUserInfo() --> return user object
+    // getUserInfo('userid') --> returns user.userid
+    Passenger.fn.getUserInfo = function(property) {
+        return !property ? this.user : this.user[property];
+    };
+
     // allow for multiple callbacks when data is received
     Passenger.fn.onData = function(fn) {
         if ($.isFunction(fn)) {
@@ -176,7 +108,5 @@
     Passenger.fn.dataCallbacks = function(data, conn) {
         for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
     };
-
-	window.Passenger = Passenger;
 
 })(this, this.jQuery, this.Peer, this.Passenger);
