@@ -6,13 +6,30 @@ $(function () {
     $username = $('#username'),
     output = document.querySelector('#output');
 
+    client.onJoin = function() {
+        output.innerHTML += [
+            '<strong>Welcome, ',
+            client.getUserInfo('username'),
+            '!</strong><br/>'
+        ].join('');
+    };
+
+    // welcome users when someone connects
+    client.onConnection(function(conn) {
+        output.innerHTML += [
+            '<strong>',
+            conn.metadata.username,
+            ' joined the chatroom!</strong><br/>'
+        ].join('');
+    });
+
     // show the message when data is received
     client.onData(function(data, conn) {
         output.innerHTML += [
             '<strong>',
             conn.metadata.username,
             ': </strong>',
-            escapeHtml(data),
+            data,
             '<br/>'
         ].join('');
     });
@@ -27,8 +44,8 @@ $(function () {
                 '<strong>',
                 $username.val(),
                 ': </strong>',
-                escapeHtml(data),
-                '<br />'
+                data,
+                '<br/>'
             ].join('');
             $input.val('');
         }
@@ -37,16 +54,10 @@ $(function () {
     // enter a username - TODO make it so you can change it
     $username.on('keydown', function (e) {
         if (e.which !== 13) return; // enter
-        client.setUserProperty('username', $username.val());
+        client.setUserInfo('username', $username.val());
         client.initializePeer();
         client.connectToPeers();
         $input.focus()
     });
 
-    // easy html formatting
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
 });

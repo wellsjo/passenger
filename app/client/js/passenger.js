@@ -28,6 +28,7 @@
 
 		},
 		_dataCallbacks = [], // hold callback functions for receiving data
+        _connectionCallbacks = [], // same, but for incoming connections
 		_peer, _singleton;
 
     // Constructor allows for one passenger initialization using singleton pattern
@@ -45,8 +46,8 @@
 	// shortcut for proto
 	Passenger.fn = Passenger.prototype;
 
-    // set a user property: setUserProperty('userid', '2345');
-    Passenger.fn.setUserProperty = function (property, value) {
+    // set a user property: setUserInfo('userid', '2345');
+    Passenger.fn.setUserInfo = function (property, value) {
         this.user[property] = value;
     };
 
@@ -92,34 +93,35 @@
 
         // once connection is open
         _peer.on('open', function (id) {
-            console.log('connection open-----');
-            console.log('userid set to ' + id);
-            that.setUserProperty('id', id);
+            console.log('connection open. userid set to ' + id);
+            that.setUserInfo('id', id);
+            that.onJoin();
         });
 
 		// attach handler for receiving connection from another peer
-		_peer.on('connection', function (conn) {
+        _peer.on('connection', function (conn) {
+
+            // for some reason if this isn't here, the username metadata doesn't carry over.
+            // otherwise it isn't necessary. maybe this is a bug in peerjs code?
             that.connectToPeers();
             conn.on('data', function (data) { that.dataCallbacks(data, conn) });
+
+            // call the stored connection callbacks
+            for (var i = 0, fn; fn = _connectionCallbacks[i++]; fn(conn));
 		});
 	};
 
+
     // connect to a peer given its id
     Passenger.fn.connectToPeer = function (remoteId) {
-        var conn, that = this, connections = _peer.connections;
+        var conn, that = this;
 
         console.log('connecting to peer ' + remoteId);
-
         conn = _peer.connect(remoteId, {
             metadata: this.user
         });
-
-        conn.on('error', function(error) {
-            console.log('error-------');
-            console.log(error);
-        });
-
-        conn.on('data', function (data) { that.dataCallbacks(data, conn) });
+        conn.on('data', function (data) { that.dataCallbacks(data, conn); });
+        conn.on('error', function(error) { console.log(error); });
     };
 
     // called when a username is set.  automatically connect to all peers
@@ -155,15 +157,24 @@
         }
     };
 
-    Passenger.fn.dataCallbacks = function(data, conn) {
-        for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
-    }
-
     // allow for multiple callbacks when data is received
     Passenger.fn.onData = function(fn) {
         if ($.isFunction(fn)) {
             _dataCallbacks.push(fn);
         }
+    };
+
+    // same as above, but for connections
+    Passenger.fn.onConnection = function(fn) {
+        if ($.isFunction(fn)) {
+            _connectionCallbacks.push(fn);
+        }
+    };
+
+    // this is called whenever data is received.  since this can happen
+    // in multiple contexts, this logic is consolidated here.
+    Passenger.fn.dataCallbacks = function(data, conn) {
+        for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
     };
 
 	window.Passenger = Passenger;
