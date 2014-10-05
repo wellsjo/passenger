@@ -13,18 +13,3 @@ var server = new PeerServer({
 });
 
 console.log('PeerServer listening on port 9000');
-
-// unnecessary, but used for demonstrating the /connections endpoint
-// I'm not sure how we're going to use the REST server yet
-var connections = [];
-
-/**
- * PeerServer Events
- */
-server.on('connection', function (id) {
-	connections.push(id);
-});
-
-server.on('disconnect', function (id) {
-	connections.splice(connections.indexOf(id), 1);
-});

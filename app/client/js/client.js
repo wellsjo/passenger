@@ -27,24 +27,27 @@ $(function () {
     client.onData(function(data, conn) {
         output.innerHTML += [
             '<strong>',
-            conn.metadata.username,
+            data.username,
             ': </strong>',
-            data,
+            data.message,
             '<br/>'
         ].join('');
     });
 
     // type into the message box
     $input.on('keydown', function (e) {
-        var data = $input.val();
+        var data = {
+            username: client.getUserInfo('username'),
+            message: $input.val()
+        };
 
         if (e.which === 13) { // enter
             client.sendToAll(data);
             output.innerHTML += [
                 '<strong>',
-                $username.val(),
+                client.getUserInfo('username'),
                 ': </strong>',
-                data,
+                data.message,
                 '<br/>'
             ].join('');
             $input.val('');

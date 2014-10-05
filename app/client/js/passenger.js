@@ -37,9 +37,7 @@
         var conn, that = this;
 
         console.log('connecting to peer ' + remoteId);
-        conn = _peer.connect(remoteId, {
-            metadata: this.user
-        });
+        conn = _peer.connect(remoteId);
         conn.on('data', function (data) { that.dataCallbacks(data, conn); });
         conn.on('error', function(error) { console.log(error); });
     };
