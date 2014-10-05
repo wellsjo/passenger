@@ -5,13 +5,16 @@
 
 var PeerServer = require('peer').PeerServer;
 
-var host = '54.164.53.196';
-var port = 9000;
+var settings = require('../../config.json');
+
+var host = settings.peer_server[settings.env].host;
+var port = settings.peer_server[settings.env].port;
+var path = settings.peer_server[settings.env].path;
 
 var server = new PeerServer({
     host: host,
     port: port,
-    path: '/',
+    path: path,
     allow_discovery: true
 });
 

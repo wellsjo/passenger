@@ -3,26 +3,24 @@
     // Default config options
     var DEFAULTS = {
 
-        env: 'local', // environment = local | remote
+        // environment = local | remote
+        // Note: this value is changed by devify.sh
+        env: "remote",
+
         debug: true,
         debug_level: 2,
 
+        // TODO just have these be overridden by devify in a local params file
         local: {
             peer_host: 'localhost',
             peer_port: 9000,
             peer_path: '/',
-
-            http_host: 'http://localhost',
-            http_port: 3000
         },
 
         remote: {
             peer_host: '54.164.53.196', // aws instance (staging)
             peer_port: 9000,
             peer_path: '/',
-
-            http_host: null, // figure this out later
-            http_port: null
         },
 
     },

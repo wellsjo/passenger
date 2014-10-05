@@ -6,24 +6,27 @@ detected_ip=$(ifconfig  | grep 'inet addr:'| grep -v '127.0.0.1' | cut -d: -f2 |
 echo "detected ip: $detected_ip"
 echo
 
-# create run.js file based on environment
-echo "#!/bin/bash" > run.sh
 
 if [ $remote_ip  = $detected_ip ]; then
-    echo "creating run.js script using remote settings..."
+    echo "setting environment to remote..."
     echo
-    echo "node app/server/passenger-server-remote.js >> run.sh"
-    echo
-    echo "node app/server/passenger-server-remote.js" >> run.sh
+    sed -ri "/\"env\":/c\ \ \ \ \"env\": \"remote\"," config.json
+    echo "config.json ✓"
 else
-    echo "creating run.js script using local settings..."
+    echo "setting environment to local..."
     echo
-    echo "node app/server/passenger-server-local.js >> run.sh"
-    echo
-    echo "node app/server/passenger-server-local.js" >> run.sh
+    sed -ri "/\"env\":/c\ \ \ \ \"env\": \"local\"," config.json
+    echo "config.json ✓"
 fi
+echo
 
-echo "setting file permissions..."
+# create run.js file based on environment
+echo "creating run script..."
+echo "#!/bin/bash" > run.sh
+echo "node app/server/passenger-server.js" >> run.sh
+echo "run.sh ✓"
+echo
+echo "setting permissions..."
 echo
 sudo chmod +x run.sh
 
