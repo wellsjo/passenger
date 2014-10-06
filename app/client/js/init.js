@@ -5,7 +5,7 @@
 
         // environment = local | remote
         // Note: this value is changed by devify.sh
-        env: "remote",
+        env: "local",
 
         debug: true,
         debug_level: 2,

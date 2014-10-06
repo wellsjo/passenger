@@ -22,9 +22,6 @@
 		// receiving connection from another peer
         _peer.on('connection', function (conn) {
 
-            // for some reason if this isn't here, the username metadata doesn't carry over.
-            // otherwise it isn't necessary. maybe this is a bug in peerjs code?
-            that.connectToPeers();
             conn.on('data', function (data) { that.dataCallbacks(data, conn) });
 
             // call the stored connection callbacks
@@ -37,7 +34,12 @@
         var conn, that = this;
 
         console.log('connecting to peer ' + remoteId);
-        conn = _peer.connect(remoteId);
+        conn = _peer.connect(remoteId, {
+            metadata: {
+                username: this.getUserInfo('username')
+            }
+        });
+
         conn.on('data', function (data) { that.dataCallbacks(data, conn); });
         conn.on('error', function(error) { console.log(error); });
     };

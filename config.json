@@ -1,5 +1,5 @@
 {
-    "env": "remote",
+    "env": "local",
     "peer_server": {
         "remote": {
             "host": "54.164.53.196",
