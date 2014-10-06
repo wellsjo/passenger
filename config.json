@@ -1,0 +1,15 @@
+{
+    "env": "local",
+    "peer_server": {
+        "remote": {
+            "host": "54.164.53.196",
+            "port": "9000",
+            "path": "/"
+        },
+        "local": {
+            "host": "localhost",
+            "port": "9000",
+            "path": "/"
+        }
+    }
+}
