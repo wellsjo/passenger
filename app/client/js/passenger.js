@@ -1,157 +1,117 @@
-(function (window, $, Peer, _old, undefined) {
-	"use strict";
+(function (window, $, Peer, Passenger, undefined) {
+    "use strict";
 
-	// Default config options
-	var DEFAULTS = {
+    var _dataCallbacks = [], // hold callback functions for receiving data
+    _connectionCallbacks = [], // same, but for incoming connections
+    _peer; // the peerjs object
 
-			env: 'local', // environment = local | remote
+    // inistantiates an new Peer object with the given options and
+    // establishes 'connection' and 'data' callback functions
+    Passenger.fn.initializePeer = function (options) {
+        var config = $.extend(true, {}, this.connections.peer, options),
+        that = this;
 
-			debug: true,
+        _peer = new Peer(config);
 
-			local: {
-				peer_host: 'localhost',
-				peer_port: 9000,
-				peer_path: '/',
+        // when you connect to the peerjs server
+        _peer.on('open', function (id) {
+            that.setUserInfo('peer_id', id);
+            that.onJoin(); // trigger onConnection events
+        });
 
-				http_host: 'http://localhost',
-				http_port: 3000
-			},
+        // when receiving incoming connection from another peer
+        _peer.on('connection', function (conn) {
 
-			remote: {
-				peer_host: '54.164.53.196', // aws instance (staging)
-				peer_port: 9000,
-				peer_path: '/',
+            // setup onData callbacks for this connection
+            conn.on('data', function (data) { that.dataCallbacks(data, conn) });
 
-				http_host: null, // figure this out later
-				http_port: null
-			},
+            // trigger connection callbacks
+            for (var i = 0, fn; fn = _connectionCallbacks[i++]; fn(conn));
 
-		},
-		_dataCallbacks = [], // hold callback functions for receiving data
-		_peer, _singleton;
+            conn.on('error', function(error) { console.log(error); });
+        });
+    };
 
-	// Constructor
-	function Passenger(options) {
-		if (!_singleton) {
-			this.config = $.extend(true, {}, DEFAULTS, options);
-			this.setupConnections();
-			this.setUserInfo();
+    // connect to a peer given its id
+    Passenger.fn.connectToPeer = function (peerId) {
+        var conn, that = this;
 
-			_singleton = this;
-		}
+        conn = _peer.connect(peerId, {
+            // metadata is only passed by the person initiating the connection.
+            // therefore, we only use this to see who has entered the room.
+            // it is not used to persist any data.
+            metadata: {
+                username: this.getUserInfo('username')
+            }
+        });
 
-		return _singleton;
-	}
+        // setup data callbacks for this connection
+        conn.on('data', function (data) { that.dataCallbacks(data, conn); });
 
-	// shortcut for proto
-	Passenger.fn = Passenger.prototype;
+        conn.on('error', function(error) { console.log(error); });
+    };
 
-	// initialize or modify user data
-	Passenger.fn.setUserInfo = function (options) {
-		this.user = $.extend(true, this.user, options);
-	};
+    // sequentially connect to each peer in the network
+    Passenger.fn.connectToPeers = function () {
+        var that = this;
 
-	// sets the old value of Passenger on the window and returns itself
-	Passenger.fn.noConflict = function () {
-		window.Passenger = _old;
-		return Passenger;
-	};
+        _peer.listAllPeers(function (peers) {
+            var connections = _peer.connections;
 
-	// accepts a hash of options and overwrites the default configs
-	// or the existing connections object on the instance
-	Passenger.fn.setupConnections = function (options) {
-		this.connections = $.extend(true, this.connections || {
-			peer: {
-				debug: this.config.debug ? 3 : 0,
-				host: this.config[this.config.env].peer_host,
-				port: this.config[this.config.env].peer_port,
-				path: this.config[this.config.env].peer_path
-			},
+            for (var x in peers) {
+                // ignore connecting to yourself as well as previously established connections
+                if (peers[x] !== that.getUserInfo('peer_id') && !connections[peers[x]]) {
+                    that.connectToPeer(peers[x]);
+                }
+            }
+        });
+    };
 
-			httpServer: [
-				this.config[this.config.env].http_host,
-				this.config[this.config.env].http_port
-			].join(':')
+    // send a direct message to one connection
+    Passenger.fn.sendToPeer = function (peerId, data) {
+        for (var i in _peer.connections[peerId]) {
+            _peer.connections[peerId][i].send(data);
+        }
+    };
 
-		}, options);
-	};
+    // send a message to all peers
+    Passenger.fn.sendToAll = function (data) {
+        var connections = _peer.connections;
+        for (var i in connections) {
+            connections[i][0].send(data);
+        }
+    };
 
-	// inistantiates an new Peer object with the given options and
-	// establishes 'connection' and 'data' callback functions
-	Passenger.fn.initializePeer = function (options) {
-		var config = $.extend(true, {}, this.connections.peer, options);
+    // set a user property: setUserInfo('peer_id', '2345');
+    Passenger.fn.setUserInfo = function (property, value) {
+        this.user[property] = value;
+    };
 
-		_peer = new Peer(this.user.id, config);
+    // get a property or all properties from the user (if no property provided)
+    // getUserInfo() --> return user object
+    // getUserInfo('peer_id') --> returns user.peer_id
+    Passenger.fn.getUserInfo = function(property) {
+        return !property ? this.user : this.user[property];
+    };
 
-		// attach handler for receiving connection from another peer
-		_peer.on('connection', function (conn) {
+    // allow for multiple callbacks when data is received
+    Passenger.fn.onData = function(fn) {
+        if ($.isFunction(fn)) {
+            _dataCallbacks.push(fn);
+        }
+    };
 
-			// loop through _dataCallbacks and call each on receiving data
-			conn.on('data', function (data) {
-				for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
-			});
+    // same as above, but for connections
+    Passenger.fn.onConnection = function(fn) {
+        if ($.isFunction(fn)) {
+            _connectionCallbacks.push(fn);
+        }
+    };
 
-		});
-
-	};
-
-	// add data handler function to _dataCallbacks array
-	Passenger.fn.onData = function (fn) {
-		if ($.isFunction(fn)) {
-			_dataCallbacks.push(fn);
-		}
-	};
-
-	// connect to a peer given its id
-	Passenger.fn.connectToPeer = function (remoteId) {
-		var conn;
-
-		if (remoteId !== _peer.id) {
-			conn = _peer.connect(remoteId, {
-				metadata: this.user
-			});
-
-			// once connection is open
-			conn.on('open', function () {
-
-				// attach handlers for receiving data
-				conn.on('data', function (data) {
-					for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
-				});
-
-			});
-		}
-	};
-
-	Passenger.fn.connectToAll = function () {
-		var that = this;
-
-		// get all peer ids from server and iterate over them, connecting to each
-		_peer.listAllPeers(function (peers) {
-			for (var remoteId; remoteId = peers.pop(); that.connectToPeer(remoteId));
-		});
-
-	};
-
-	Passenger.fn.sendToPeer = function (id, data) {
-		var connections = _peer.connections[id],
-			i, conn;
-
-		debugger;
-		// iterate over connections for a given peer id and send to each
-		for (i = 0; conn = connections && connections[i++]; conn.send(data));
-	};
-
-	Passenger.fn.sendToAll = function (data) {
-		var connections = _peer.connections,
-			remoteIds = Object.keys(connections),
-			id;
-
-		while (id = remoteIds.pop())
-			this.sendToPeer(id, data);
-
-	};
-
-	window.Passenger = Passenger;
+    // this is called whenever data is received.  since this can happen
+    // in multiple contexts, this logic is consolidated here.
+    Passenger.fn.dataCallbacks = function(data, conn) {
+        for (var i = 0, fn; fn = _dataCallbacks[i++]; fn(data, conn));
+    };
 
 })(this, this.jQuery, this.Peer, this.Passenger);

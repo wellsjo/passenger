@@ -13,4 +13,17 @@ npm install
 node app/server/client-server-local
 # open a new terminal window
 open app/client/html/client.html
+=======
+## Passegner
+Messaging framework built around peerjs
+
+### Install
+```bash
+git clone git@github.com:wellsjo/passenger.git
+cd passenger
+./devify.sh # creates run.sh script
+```
+### Run Peer Server
+```bash
+./run.sh
 ```
