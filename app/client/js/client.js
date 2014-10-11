@@ -6,15 +6,6 @@ $(function () {
     $username = $('#username'),
     output = document.querySelector('#output');
 
-    // fired when you join a peer network
-    client.onJoin = function() {
-        output.innerHTML += [
-            '<strong>Welcome, ',
-            client.getUserInfo('username'),
-            '!</strong><br/>'
-        ].join('');
-    };
-
     // fired when someone connects
     client.onConnection(function(conn) {
         output.innerHTML += [
@@ -59,9 +50,20 @@ $(function () {
     $username.on('keydown', function (e) {
         if (e.which !== 13) return; // enter
         client.setUserInfo('username', $username.val());
-        client.initializePeer();
-        client.connectToPeers();
-        $input.focus()
+        client.initializePeer({}, function() {
+            client.connectToPeers(function(){
+                welcome();
+                $input.focus()
+            });
+        });
     });
+
+    function welcome() {
+        output.innerHTML += [
+            '<strong>Welcome, ',
+            client.getUserInfo('username'),
+            '!</strong><br/>'
+        ].join('');
+    }
 
 });
