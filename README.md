@@ -1,4 +1,4 @@
 passenger
 =========
 
-framework for peerjs 
+messaging app using p2p web components
