@@ -11,7 +11,8 @@ Here is a demo connecting and messaging between 9 browsers:
 git clone git@github.com:wellsjo/passenger.git
 cd passenger
 npm install
-./devify.sh # creates run.sh script
+# creates a run script
+./devify.sh 
 ```
 ### Run Peer Server
 ```bash
