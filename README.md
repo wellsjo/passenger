@@ -19,3 +19,6 @@ npm install
 # this will open your browser and start the local server
 ./run.sh
 ```
+
+##License
+MIT
